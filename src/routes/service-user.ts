@@ -41,3 +41,5 @@ routerGlobal.get('/profile',checkToken,controller.showProfile);
 routerGlobal.post('/token',checkForRefreshToken,controller.showProfile);
 
 routerGlobal.post('/token-valid',checkTokenByRequest);
+
+routerGlobal.post('/update-password',checkToken,controller.updatePassword);

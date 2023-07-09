@@ -1,18 +1,41 @@
 import { MongoConnect } from './../src/datastore/wmongo';
-import { appconfig, loggerApp, loadUserDAO } from '../src/init/configure';
+import { appconfig, loggerApp, loadUserDAO, loadMessageBroker } from '../src/init/configure';
 import { app } from '../src/main';
+import {MQservice} from '../src/services'
+
 
 const puerto = appconfig.port || 8080;
 
 const server = app.listen(puerto, async () => {
 
     await loadUserDAO();
+
+    await loadMessageBroker();
     
-    console.log(`servidor escuchando en http://localhost:${puerto}`);
+    loggerApp.debug(`servidor escuchando en http://localhost:${puerto}`);
 });
 
 server.on('error', error => {
-    console.log('error en el servidor:', error);
+    
+    loggerApp.debug(`Error server:${error.message}`);
+    
+    const mq = MQservice.getInstance(appconfig.message.queuename,appconfig.message.exchname,appconfig.message.routerkey);
+
+    mq.closeChannel()
+    .then(()=>{
+        mq.closeConnection()
+        .then(()=>{
+            process.exit(0);
+        })
+        .catch((error)=>{
+            loggerApp.error(`Error al cerrar conexión de mq..${error}`);
+            process.exit(1);
+        })
+    })
+    .catch((error)=>{
+        loggerApp.error(`Error al cerrar canal de mq..${error}`);
+        process.exit(1);
+    });
 });
 
 
@@ -29,18 +52,29 @@ process.on('SIGINT', function() {
             appconfig.persistence.mongo);
             DB.getConnection().close(true)
             .then(()=>{
-                console.log("Close DB..");
-                loggerApp.debug("Close DB..");
-                process.exit(0);
+               loggerApp.error("Close DB..");
+            })
+            .catch((error)=>{
+               loggerApp.error(`Error mongo close DB..${error}`);
             });
-
-            // DB.getConnection().close(true,function(err:unknown){
-            //     // console.log("Close DB..");
-            //     // loggerApp.debug("Close DB..");
-            //     // process.exit(err ? 1 : 0);
-            // });
     }
-    
-    process.exit(0);
+
+    const mq = MQservice.getInstance(appconfig.message.queuename,appconfig.message.exchname,appconfig.message.routerkey);
+
+    mq.closeChannel()
+    .then(()=>{
+        mq.closeConnection()
+        .then(()=>{
+            process.exit(0);
+        })
+        .catch((error)=>{
+            loggerApp.error(`Error al cerrar conexión de mq..${error}`);
+            process.exit(1);
+        })
+    })
+    .catch((error)=>{
+        loggerApp.error(`Error al cerrar canal de mq..${error}`);
+        process.exit(1);
+    });
 
 });

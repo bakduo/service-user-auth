@@ -4,11 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "save-version" : "node --version > .nvmrc",
+    "save-version": "node --version > .nvmrc",
     "build": "rm -rf dist/ && tsc",
     "dev": "cross-env NODE_ENV='development' ts-node-dev --respawn bin/run.ts",
     "devjs": "cross-env NODE_ENV='development' npm run build && nodemon dist/bin/run.js",
-    "test": "cross-env NODE_ENV='development' mocha -r ts-node/register --watch-extensions ts --colors _test_/*.ts --reporter mochawesome --timeout 15000 --exit",
+    "test-with-mq": "cross-env NODE_ENV='development' mocha -r ts-node/register --watch-extensions ts --colors _test_/controller-user.test.ts --reporter mochawesome --timeout 15000 --exit",
+    "test": "cross-env NODE_ENV='development-test' mocha -r ts-node/register --watch-extensions ts --colors _test_/controller-user.test.ts _test_/token-mongo.test.ts _test_/user-mongo.test.ts --reporter mochawesome --timeout 15000 --exit",
+    "test-mq": "cross-env NODE_ENV='development' mocha -r ts-node/register --watch-extensions ts --colors _test_/mqservice.test.ts --reporter mochawesome --timeout 15000 --exit",
     "pre-loading": "ts-node loading/generate-users.ts",
     "stress:register": "artillery run loading/config.yml --output loading/test-register.json",
     "stress:login": "artillery run loading/miscelaneas-user.yml --output loading/test-login.json",
@@ -18,8 +20,8 @@
     "start:pm2-cluster": "make build && cross-env NODE_ENV='development' pm2 start -i 6 ./dist/bin/run.js --name='sue'",
     "start:pm2docker": "cross-env NODE_ENV='production' pm2-runtime start ./bin/run.js --env production --name='api-user'"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "bakduo",
+  "license": "GPL-3.0",
   "dependencies": {
     "@opentelemetry/core": "^1.13.0",
     "@opentelemetry/exporter-zipkin": "^1.13.0",
@@ -32,6 +34,7 @@
     "@types/config": "^3.3.0",
     "@types/pino": "^7.0.5",
     "@types/pino-multi-stream": "^5.1.3",
+    "amqplib": "^0.10.3",
     "bcrypt": "^5.1.0",
     "class-validator": "^0.14.0",
     "config": "^3.3.9",
@@ -61,6 +64,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^8.0.1",
+    "@types/amqplib": "^0.10.1",
     "@types/bcrypt": "^5.0.0",
     "@types/chai": "^4.3.5",
     "@types/chai-http": "^4.2.0",

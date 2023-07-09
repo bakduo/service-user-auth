@@ -32,8 +32,6 @@ export const checkForRefreshToken = async (req:Request, res:Response, next:NextF
       const {id, roles} = decoded as ITokenDecode;
 
         const accessToken = jwt.sign({id, roles}, appconfig.jwt.secret, { expiresIn: appconfig.jwt.timeToken });
-        
-        //Update refresh also
 
         const refreshToken = jwt.sign({
           id:id,

@@ -1,4 +1,4 @@
-Service user auth
+Service api user auth
 ==================
 
 ## Summary
@@ -12,7 +12,9 @@ Service user auth
 - [X] JWT secure
 - [X] Authorization + Authentication.
 - [X] Test stress by Artillery Ok with > 1K User.
-- [X] Add support replicaset Mongo by parameter and transaction.
+- [X] Add support replicaset Mongo.
 - [X] Add support TypeORM
 - [X] Add support Keycloak auth role + credential.
+- [X] pm2 support.
+- [x] support RabbitMQ for async message
 

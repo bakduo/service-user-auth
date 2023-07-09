@@ -2,11 +2,12 @@ import passport from "passport";
 import passportLocal from "passport-local";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-//import { ITokenDTO } from "../dto";
+
 import { userDAO, ERRORS_APP, loggerApp, tokenDAO, appconfig } from "../init";
 import { EBase, IToken, errorGenericType } from "../interfaces";
 import { validateUser, isValidPassword } from "../util";
 import { checkRealToken, isValidToken } from '../util/validToken';
+import { MQservice } from "../services";
 
 
 const LocalStrategy = passportLocal.Strategy;
@@ -122,12 +123,39 @@ export const initPassport = ()=>{
              const encontrado = await userDAO.findOne({keycustom:'email',valuecustom:email.toLowerCase()});
 
              if (!encontrado){
+                try {
+                    const mqs = MQservice.getInstance(appconfig.message.queuename,appconfig.message.exchname,appconfig.message.routerkey);
+                    const message = {
+                        appname:'userapi',
+                        date:Date.now(),
+                        type_event:'passwport-user-notfound'
+                    }
+                    mqs.sendMessage(message);
+                } catch (error) {
+                    const err = error as errorGenericType;
+                    loggerApp.error(`Exception Passport on login user not found send message queue broker: ${err.message}`);
+                }
+
                 return done(new EInvalidCredential('usuario o password invalido',ERRORS_APP.EInvalidCredential.code,ERRORS_APP.EInvalidCredential.HttpStatusCode));
+                
              }
 
              const valido = await isValidPassword(password,encontrado.password);
 
              if (!valido){
+                try {
+                    const mqs = MQservice.getInstance(appconfig.message.queuename,appconfig.message.exchname,appconfig.message.routerkey);
+                    const message = {
+                        appname:'userapi',
+                        date:Date.now(),
+                        type_event:'passwport-passwd-invalid'
+                    }
+                    mqs.sendMessage(message);
+                } catch (error) {
+                    const err = error as errorGenericType;
+                    loggerApp.error(`Exception Passport on login invalid password send message queue broker: ${err.message}`);
+                }
+
                 return done(new EInvalidCredential('usuario o password invalido',ERRORS_APP.EInvalidCredential.code,ERRORS_APP.EInvalidCredential.HttpStatusCode));
              }
 

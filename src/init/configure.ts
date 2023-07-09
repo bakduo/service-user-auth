@@ -3,15 +3,13 @@ import pino from "pino";
 import stream from 'stream';
 import childProcess from 'child_process';
 import { IGenericDB, FUserDAO, FTokenDAO } from '../dao';
-// import { IUserDTO } from '../dto';
-// import { ITokenDTO } from '../dto/tokenDTO';
 import { initMUserRemoteInstance } from '../dao/sequelize/suser-remote-orm';
 import { configORM } from '../datastore/wsql';
 import { errorGenericType } from '../interfaces/error';
 import { FactorySession } from '../datastore/session/fsession';
 import { ISessionStoreGeneric } from '../datastore/session/generic-session-store';
 import { IToken, IUser } from '../interfaces';
-import { array } from 'joi';
+import { MQservice } from '../services';
 
 const logThrough = new stream.PassThrough();
 
@@ -85,6 +83,11 @@ export const ERRORS_APP = {
     'EFindUser':{
         detail:'Exception on findone on datastore',
         code: 1007,
+        HttpStatusCode: 500
+    },
+    'EUpdatePasswd':{
+        detail:'Exception on update passswd on datastore',
+        code: 1008,
         HttpStatusCode: 500
     },
     'EBase':{
@@ -179,15 +182,25 @@ interface IConfigDB {
                 port:number;
             }
         }
+    },
+    message:{
+        enable:boolean,
+        rabbitmq:boolean,
+        server:string,
+        port:number,
+        vhost:string,
+        username:string,
+        password:string,
+        exchname:string,
+        queuename:string,
+        routerkey:string,
     }
 
 }
 
 export const appconfig:IConfigDB = config.get('app');
 
-//export let userDAO:IGenericDB<IUserDTO>;
 export let userDAO:IGenericDB<IUser>;
-//export let tokenDAO:IGenericDB<ITokenDTO>;
 export let tokenDAO:IGenericDB<IToken>;
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -246,7 +259,12 @@ export const loadUserDAO = async () =>{
                 break;
         }
     });
-
     await Promise.all(waiting);
+}
 
+export const loadMessageBroker = async () =>{
+    const mqs = MQservice.getInstance(appconfig.message.queuename,appconfig.message.exchname,appconfig.message.routerkey);
+    await mqs.connect(appconfig.message.server,appconfig.message.port,appconfig.message.vhost,appconfig.message.username,appconfig.message.password);
+    await mqs.getChannel();
+    await mqs.configureChannel();
 }
