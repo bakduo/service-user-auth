@@ -19,23 +19,6 @@ server.on('error', error => {
     
     loggerApp.debug(`Error server:${error.message}`);
     
-    const mq = MQservice.getInstance(appconfig.message.queuename,appconfig.message.exchname,appconfig.message.routerkey);
-
-    mq.closeChannel()
-    .then(()=>{
-        mq.closeConnection()
-        .then(()=>{
-            process.exit(0);
-        })
-        .catch((error)=>{
-            loggerApp.error(`Error al cerrar conexión de mq..${error}`);
-            process.exit(1);
-        })
-    })
-    .catch((error)=>{
-        loggerApp.error(`Error al cerrar canal de mq..${error}`);
-        process.exit(1);
-    });
 });
 
 
